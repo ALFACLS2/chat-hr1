@@ -63,16 +63,10 @@
             "surface-bright": "#fff8f7"
           },
           fontFamily: {
-            headline: ["Inter"],
-            body: ["Inter"],
-            label: ["Inter"],
-            display: "Inter"
+            headline: ["Inter"], body: ["Inter"], label: ["Inter"], display: "Inter"
           },
           borderRadius: {
-            DEFAULT: "0.5rem",
-            lg: "1rem",
-            xl: "1.5rem",
-            full: "9999px"
+            DEFAULT: "0.5rem", lg: "1rem", xl: "1.5rem", full: "9999px"
           }
         }
       }
@@ -85,15 +79,12 @@
   <header class="fixed top-0 w-full flex items-center justify-between px-4 py-3 glass-panel z-50">
     <div class="flex items-center gap-3">
       <div class="relative w-10 h-10 rounded-full bg-secondary-container/40 flex items-center justify-center overflow-hidden border border-white/30">
-      <img 
-        src="https://res.cloudinary.com/dprt1m1wl/image/upload/v1774413494/disney_avatar_512_k6umag.png" 
-        class="w-full h-full object-cover rounded-full" 
-      />
+        <div class="w-full h-full bg-primary flex items-center justify-center text-white font-bold text-lg">AI</div>
         <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white/50 rounded-full"></div>
       </div>
       <div class="flex flex-col">
-        <h1 class="font-Inter title-sm font-semibold tracking-tight text-primary">MINFA</h1>
-        <span class="text-[10px] uppercase tracking-widest text-secondary font-bold" id="status-text">Online</span>
+        <h1 class="font-Inter title-sm font-semibold tracking-tight text-primary">AI Assistant</h1>
+        <span class="text-[10px] uppercase tracking-widest text-secondary font-bold">Online</span>
       </div>
     </div>
     <div class="flex items-center gap-1">
@@ -104,15 +95,12 @@
   </header>
 
   <!-- Main Chat Canvas -->
-  <main class="flex-1 overflow-y-auto pt-20 pb-24 px-4 hide-scrollbar space-y-6" id="chat-container">
-    <!-- Date Marker -->
+  <main class="flex-1 overflow-y-auto pt-20 pb-36 px-4 hide-scrollbar space-y-6" id="chat-container">
     <div class="flex justify-center my-8">
       <span class="bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-semibold text-on-surface-variant tracking-wider uppercase border border-white/20" id="date-marker"></span>
     </div>
 
-    <!-- Messages will be injected here by script.js -->
-
-    <!-- Typing Indicator (hidden by default) -->
+    <!-- Typing Indicator -->
     <div class="flex items-center gap-2 px-2 py-2 hidden" id="typing-indicator">
       <div class="glass-bubble-ai px-4 py-3 rounded-full flex items-center gap-1.5 shadow-sm">
         <div class="w-1.5 h-1.5 bg-tertiary rounded-full opacity-40 animate-pulse"></div>
@@ -123,23 +111,34 @@
     </div>
   </main>
 
-  <!-- Message Input Bar -->
-  <footer class="fixed bottom-0 left-0 w-full glass-panel px-4 py-3 z-50 flex items-center gap-3">
-    <div class="flex-1 relative">
-      <input
-        class="w-full bg-white/40 border border-white/40 focus:ring-2 focus:ring-primary/20 rounded-full py-2.5 px-5 text-sm placeholder-slate-500 backdrop-blur-md"
-        placeholder="Type a message..."
-        type="text"
-        id="message-input"
-        autocomplete="off"
-      />
+  <!-- Footer: Quick Reply + Input Bar -->
+  <footer class="fixed bottom-0 left-0 w-full z-50 flex flex-col">
+
+    <!-- Quick Reply Bar -->
+    <div class="glass-panel border-b border-white/20 px-4 py-2">
+      <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1" id="quick-reply-bar"></div>
     </div>
-    <button
-      class="flex-shrink-0 w-11 h-11 bg-primary text-white flex items-center justify-center rounded-full shadow-lg active:scale-90 transition-transform"
-      id="send-button"
-    >
-      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
-    </button>
+
+    <!-- Input Bar -->
+    <div class="glass-panel px-4 py-3 flex items-center gap-3">
+      <div class="flex-1 relative">
+        <input
+          class="w-full bg-white/40 border border-white/40 focus:ring-2 focus:ring-primary/20 rounded-full py-2.5 px-5 text-sm placeholder-slate-500 backdrop-blur-md"
+          placeholder="Ketik pertanyaanmu..."
+          type="text"
+          id="message-input"
+          autocomplete="off"
+          style="font-size: 16px;"
+        />
+      </div>
+      <button
+        class="flex-shrink-0 w-11 h-11 bg-primary text-white flex items-center justify-center rounded-full shadow-lg active:scale-90 transition-transform"
+        id="send-button"
+      >
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+      </button>
+    </div>
+
   </footer>
 
   <script src="script.js"></script>
