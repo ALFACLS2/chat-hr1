@@ -9,8 +9,15 @@ body {
   min-height: -webkit-fill-available;
 }
 
-html {
+html, body {
+  height: 100%;
   height: -webkit-fill-available;
+  overflow: hidden;
+}
+
+main {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ===== SCROLLBAR ===== */
