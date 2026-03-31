@@ -5,8 +5,8 @@ const { tfidfSearchTop } = require("../utils/tfidf");
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-const THRESHOLD_CONFIDENT  = 0.2;
-const THRESHOLD_SUGGESTION = 0.05;
+const THRESHOLD_CONFIDENT  = 0.08; // turunkan biar ga banyak "tidak tahu"
+const THRESHOLD_SUGGESTION = 0.02; // minimum buat munculin suggestion
 
 function loadKnowledge() {
   const filePath = path.join(process.cwd(), "data", "knowledge.txt");
@@ -16,9 +16,9 @@ function loadKnowledge() {
 
 async function askGemini(userMessage, relevantContext) {
   const prompt = `
-Kamu adalah asisten AI yang HANYA menjawab berdasarkan informasi berikut.
-Jika jawaban tidak ada, balas TEPAT: "Maaf, saya tidak memiliki informasi tentang itu."
-Jangan mengarang. Jangan tambah info di luar yang diberikan.
+Kamu adalah asisten AI rekrutmen Alfamart Cileungsi 2.
+Jawab HANYA berdasarkan informasi berikut. Jangan mengarang.
+Jika tidak ada di informasi, balas: "Maaf, saya tidak memiliki informasi tentang itu."
 
 === INFORMASI RELEVAN ===
 ${relevantContext}
@@ -26,7 +26,7 @@ ${relevantContext}
 
 Pertanyaan: ${userMessage}
 
-Jawab singkat, jelas, dan ramah. Gunakan bahasa yang sama dengan pertanyaan.
+Jawab singkat, jelas, ramah. Gunakan bahasa yang sama dengan pertanyaan.
 `.trim();
 
   const response = await fetch(GEMINI_URL, {
@@ -38,11 +38,7 @@ Jawab singkat, jelas, dan ramah. Gunakan bahasa yang sama dengan pertanyaan.
     })
   });
 
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(`Gemini error: ${err?.error?.message || response.status}`);
-  }
-
+  if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
   const data = await response.json();
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
 }
@@ -73,7 +69,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ reply: "Knowledge base belum tersedia.", suggestions: [] });
   }
 
-  // Cari top 5 hasil
+  // Cari top 5 hasil TF-IDF
   const topResults = tfidfSearchTop(message, knowledge, 5, THRESHOLD_SUGGESTION);
 
   // Ga ketemu sama sekali
@@ -88,7 +84,6 @@ module.exports = async function handler(req, res) {
   const confidentResults = topResults.filter(r => r.score >= THRESHOLD_CONFIDENT);
 
   if (confidentResults.length > 0) {
-    // Ada jawaban yakin → kirim ke Gemini
     const relevantContext = confidentResults
       .slice(0, 3)
       .map((r, i) => `${i + 1}. Q: ${r.question}\n   A: ${r.answer}`)
@@ -112,7 +107,7 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // Skor rendah → kirim suggestion sebagai array terpisah
+  // Skor rendah → kasih suggestion bubble
   const suggestions = topResults
     .slice(0, 3)
     .map(r => extractTopic(r.question));
