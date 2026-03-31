@@ -1,7 +1,10 @@
 /* ===== BASE ===== */
 body {
   font-family: "Inter", sans-serif;
-  background: url('https://res.cloudinary.com/dprt1m1wl/image/upload/v1774948996/ChatGPT_Image_Mar_31_2026_08_53_34_AM_cn2ncc.png');
+  background-image: url('https://res.cloudinary.com/dprt1m1wl/image/upload/v1774948996/ChatGPT_Image_Mar_31_2026_08_53_34_AM_cn2ncc.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
   min-height: 100vh;
 }
