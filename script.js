@@ -12,6 +12,19 @@ dateMarker.textContent = new Date().toLocaleDateString("id-ID", {
   weekday: "long", day: "numeric", month: "long", year: "numeric"
 });
 
+// ── Quick Reply Topics ────────────────────────────────────────
+
+const QUICK_REPLIES = [
+  { label: "Info Lowongan",    message: "ada lowongan" },
+  { label: "Cara Daftar",      message: "cara ngelamar" },
+  { label: "Lokasi Tes",       message: "tmpat tes dmn" },
+  { label: "Syarat Dokumen",   message: "bwa ap aj" },
+  { label: "Walk In",          message: "walk in" },
+  { label: "Status Lamaran",   message: "kok msh d proses" },
+];
+
+// ── Helpers ───────────────────────────────────────────────────
+
 function getTime() {
   return new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 }
@@ -48,22 +61,16 @@ function renderAIBubble(text, suggestions = []) {
 
   const formatted = formatText(text);
 
-  // Buat suggestion buttons kalau ada
   let suggestionHTML = "";
   if (suggestions && suggestions.length > 0) {
     const buttons = suggestions.map(s => `
       <button
         onclick="handleSuggestion(this)"
         data-text="${escapeHtml(s)}"
-        class="suggestion-btn text-left px-3 py-2 rounded-full text-[13px] font-medium text-primary border border-primary/30 bg-white/50 hover:bg-primary hover:text-white active:scale-95 transition-all"
+        class="text-left px-3 py-2 rounded-full text-[13px] font-medium text-primary border border-primary/30 bg-white/50 hover:bg-primary hover:text-white active:scale-95 transition-all"
       >${escapeHtml(s)}</button>
     `).join("");
-
-    suggestionHTML = `
-      <div class="flex flex-wrap gap-2 mt-2">
-        ${buttons}
-      </div>
-    `;
+    suggestionHTML = `<div class="flex flex-wrap gap-2 mt-2">${buttons}</div>`;
   }
 
   wrapper.innerHTML = `
@@ -83,6 +90,13 @@ window.handleSuggestion = function(btn) {
   const text = btn.getAttribute("data-text");
   if (!text) return;
   messageInput.value = text;
+  sendMessage();
+};
+
+// ── Handle Quick Reply Click ──────────────────────────────────
+
+window.handleQuickReply = function(message) {
+  messageInput.value = message;
   sendMessage();
 };
 
@@ -165,6 +179,23 @@ messageInput.addEventListener("keydown", (e) => {
 
 window.addEventListener("load", () => {
   setTimeout(() => {
-    renderAIBubble("Halo! 👋 Ada yang bisa saya bantu?");
+    renderAIBubble("Halo! 👋 Ada yang bisa saya bantu?\nSilakan pilih topik di bawah atau ketik pertanyaanmu langsung.");
   }, 500);
 });
+
+// ── Render Quick Reply Bar ────────────────────────────────────
+
+function renderQuickReplies() {
+  const container = document.getElementById("quick-reply-bar");
+  if (!container) return;
+
+  QUICK_REPLIES.forEach(item => {
+    const btn = document.createElement("button");
+    btn.className = "flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-semibold text-primary border border-primary/40 bg-white/50 backdrop-blur-sm hover:bg-primary hover:text-white active:scale-95 transition-all whitespace-nowrap shadow-sm";
+    btn.textContent = item.label;
+    btn.onclick = () => handleQuickReply(item.message);
+    container.appendChild(btn);
+  });
+}
+
+renderQuickReplies();
