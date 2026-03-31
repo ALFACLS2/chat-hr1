@@ -1,21 +1,16 @@
 // ============================================================
 //  script.js — Chat UI Logic
-//  Handles: send message, render bubble, typing indicator,
-//           auto-scroll, timestamp, call /api/chat
 // ============================================================
 
-const chatContainer = document.getElementById("chat-container");
-const messageInput  = document.getElementById("message-input");
-const sendButton    = document.getElementById("send-button");
+const chatContainer   = document.getElementById("chat-container");
+const messageInput    = document.getElementById("message-input");
+const sendButton      = document.getElementById("send-button");
 const typingIndicator = document.getElementById("typing-indicator");
-const dateMarker    = document.getElementById("date-marker");
+const dateMarker      = document.getElementById("date-marker");
 
-// Set today's date on the marker
 dateMarker.textContent = new Date().toLocaleDateString("id-ID", {
   weekday: "long", day: "numeric", month: "long", year: "numeric"
 });
-
-// ── Helpers ──────────────────────────────────────────────────
 
 function getTime() {
   return new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
@@ -25,7 +20,7 @@ function scrollToBottom() {
   chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: "smooth" });
 }
 
-// ── Render Bubbles ────────────────────────────────────────────
+// ── Render User Bubble ────────────────────────────────────────
 
 function renderUserBubble(text) {
   const time = getTime();
@@ -44,17 +39,37 @@ function renderUserBubble(text) {
   scrollToBottom();
 }
 
-function renderAIBubble(text) {
+// ── Render AI Bubble ──────────────────────────────────────────
+
+function renderAIBubble(text, suggestions = []) {
   const time = getTime();
   const wrapper = document.createElement("div");
   wrapper.className = "flex flex-col items-start space-y-1 message-bubble";
 
-  // Basic markdown: **bold**, `code`
   const formatted = formatText(text);
+
+  // Buat suggestion buttons kalau ada
+  let suggestionHTML = "";
+  if (suggestions && suggestions.length > 0) {
+    const buttons = suggestions.map(s => `
+      <button
+        onclick="handleSuggestion(this)"
+        data-text="${escapeHtml(s)}"
+        class="suggestion-btn text-left px-3 py-2 rounded-full text-[13px] font-medium text-primary border border-primary/30 bg-white/50 hover:bg-primary hover:text-white active:scale-95 transition-all"
+      >${escapeHtml(s)}</button>
+    `).join("");
+
+    suggestionHTML = `
+      <div class="flex flex-wrap gap-2 mt-2">
+        ${buttons}
+      </div>
+    `;
+  }
 
   wrapper.innerHTML = `
     <div class="max-w-[85%] glass-bubble-ai text-on-surface px-4 py-3 rounded-t-xl rounded-br-xl rounded-bl-sm shadow-md">
       <div class="space-y-2 font-Inter text-[15px] leading-relaxed">${formatted}</div>
+      ${suggestionHTML}
     </div>
     <span class="text-[10px] text-slate-600 px-1 font-medium">${time}</span>
   `;
@@ -62,18 +77,22 @@ function renderAIBubble(text) {
   scrollToBottom();
 }
 
-// ── Text Formatter (mini markdown) ───────────────────────────
+// ── Handle Suggestion Click ───────────────────────────────────
+
+window.handleSuggestion = function(btn) {
+  const text = btn.getAttribute("data-text");
+  if (!text) return;
+  messageInput.value = text;
+  sendMessage();
+};
+
+// ── Text Formatter ────────────────────────────────────────────
 
 function formatText(text) {
-  // Code block ```...```
   text = text.replace(/```([\s\S]*?)```/g, '<div class="code-block">$1</div>');
-  // Inline code `...`
   text = text.replace(/`([^`]+)`/g, '<code class="bg-white/40 px-1 rounded text-secondary font-mono text-sm">$1</code>');
-  // Bold **...**
   text = text.replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-primary">$1</strong>');
-  // Auto link URL → klik langsung buka tab baru
   text = text.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary underline font-medium break-all">$1</a>');
-  // Newline
   text = text.replace(/\n/g, "<br/>");
   return text;
 }
@@ -86,7 +105,7 @@ function escapeHtml(text) {
     .replace(/"/g, "&quot;");
 }
 
-// ── Typing Indicator ─────────────────────────────────────────
+// ── Typing Indicator ──────────────────────────────────────────
 
 function showTyping() {
   typingIndicator.classList.remove("hidden");
@@ -97,7 +116,7 @@ function hideTyping() {
   typingIndicator.classList.add("hidden");
 }
 
-// ── Send Message ─────────────────────────────────────────────
+// ── Send Message ──────────────────────────────────────────────
 
 async function sendMessage() {
   const text = messageInput.value.trim();
@@ -119,7 +138,7 @@ async function sendMessage() {
 
     const data = await response.json();
     hideTyping();
-    renderAIBubble(data.reply);
+    renderAIBubble(data.reply, data.suggestions || []);
 
   } catch (err) {
     hideTyping();
