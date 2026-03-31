@@ -56,12 +56,12 @@ function cosineSimilarity(vecA, vecB) {
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-function tfidfSearch(query, rawKnowledge, threshold = 0.15) {
+function tfidfSearch(query, rawKnowledge, threshold = 0.25) {
   const results = tfidfSearchTop(query, rawKnowledge, 1, threshold);
   return results.length > 0 ? results[0].answer : null;
 }
 
-function tfidfSearchTop(query, rawKnowledge, topN = 3, threshold = 0.1) {
+function tfidfSearchTop(query, rawKnowledge, topN = 3, threshold = 0.2) {
   const entries = parseKnowledge(rawKnowledge);
   if (entries.length === 0) return [];
 
