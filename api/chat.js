@@ -1,12 +1,3 @@
-// ============================================================
-//  /api/chat.js — Vercel Serverless Function
-//  Flow:
-//    1. Cari top results pakai TF-IDF
-//    2. Kalau skor tinggi → kirim ke Gemini
-//    3. Kalau skor rendah → tampilkan suggestion "mungkin kamu bertanya soal"
-//    4. Kalau ga ketemu sama sekali → jawab "tidak tahu"
-// ============================================================
-
 const fs   = require("fs");
 const path = require("path");
 const { tfidfSearchTop } = require("../utils/tfidf");
@@ -14,8 +5,8 @@ const { tfidfSearchTop } = require("../utils/tfidf");
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-const THRESHOLD_CONFIDENT  = 0.2;  // skor tinggi → jawab
-const THRESHOLD_SUGGESTION = 0.08; // skor rendah tapi ada → kasih suggestion
+const THRESHOLD_CONFIDENT  = 0.2;
+const THRESHOLD_SUGGESTION = 0.05;
 
 function loadKnowledge() {
   const filePath = path.join(process.cwd(), "data", "knowledge.txt");
@@ -56,12 +47,11 @@ Jawab singkat, jelas, dan ramah. Gunakan bahasa yang sama dengan pertanyaan.
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
 }
 
-// Ambil topik singkat dari pertanyaan (3 kata pertama)
 function extractTopic(question) {
   return question
     .replace(/^(apakah|bagaimana|gimana|apa|boleh|bisa|kapan|dimana|kenapa|siapa)\s+/i, "")
     .split(" ")
-    .slice(0, 5)
+    .slice(0, 6)
     .join(" ");
 }
 
@@ -80,25 +70,25 @@ module.exports = async function handler(req, res) {
 
   const knowledge = loadKnowledge();
   if (!knowledge) {
-    return res.status(200).json({ reply: "Knowledge base belum tersedia." });
+    return res.status(200).json({ reply: "Knowledge base belum tersedia.", suggestions: [] });
   }
 
-  // Step 1: Cari top 5 hasil TF-IDF
+  // Cari top 5 hasil
   const topResults = tfidfSearchTop(message, knowledge, 5, THRESHOLD_SUGGESTION);
 
   // Ga ketemu sama sekali
   if (!topResults || topResults.length === 0) {
     return res.status(200).json({
-      reply: "Maaf, saya tidak memiliki informasi tentang itu. 🙏\n\nCoba tanyakan dengan kata yang lebih spesifik ya!",
+      reply: "Maaf, saya tidak memiliki informasi tentang itu. 🙏\nCoba tanyakan dengan kata yang lebih spesifik ya!",
+      suggestions: [],
       source: "not_found"
     });
   }
 
-  // Step 2: Cek apakah ada yang skornya confident
   const confidentResults = topResults.filter(r => r.score >= THRESHOLD_CONFIDENT);
 
   if (confidentResults.length > 0) {
-    // Ada jawaban yang yakin → kirim ke Gemini
+    // Ada jawaban yakin → kirim ke Gemini
     const relevantContext = confidentResults
       .slice(0, 3)
       .map((r, i) => `${i + 1}. Q: ${r.question}\n   A: ${r.answer}`)
@@ -108,28 +98,28 @@ module.exports = async function handler(req, res) {
       try {
         const geminiReply = await askGemini(message, relevantContext);
         if (geminiReply) {
-          return res.status(200).json({ reply: geminiReply, source: "gemini" });
+          return res.status(200).json({ reply: geminiReply, suggestions: [], source: "gemini" });
         }
       } catch (err) {
-        console.warn("Gemini gagal, fallback TF-IDF:", err.message);
+        console.warn("Gemini gagal:", err.message);
       }
     }
 
-    // Fallback TF-IDF
     return res.status(200).json({
       reply: confidentResults[0].answer,
+      suggestions: [],
       source: "tfidf"
     });
   }
 
-  // Step 3: Skor rendah → tampilkan suggestion
+  // Skor rendah → kirim suggestion sebagai array terpisah
   const suggestions = topResults
     .slice(0, 3)
-    .map(r => `• ${extractTopic(r.question)}`)
-    .join("\n");
+    .map(r => extractTopic(r.question));
 
   return res.status(200).json({
-    reply: `Hmm, saya kurang yakin dengan pertanyaanmu. 🙏\n\nMungkin kamu bertanya soal:\n${suggestions}\n\nCoba tanyakan lebih spesifik ya!`,
+    reply: "Hmm, saya kurang yakin dengan pertanyaanmu. 🙏\nMungkin kamu bertanya soal:",
+    suggestions,
     source: "suggestion"
   });
 };
