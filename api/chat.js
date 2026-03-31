@@ -1,20 +1,18 @@
 // ============================================================
 //  /api/chat.js — Vercel Serverless Function
 //  Flow:
-//    1. Baca knowledge.txt
-//    2. Coba Gemini API (gratis tier)
-//    3. Kalau Gemini gagal/rate limit → fallback TF-IDF
-//    4. Kalau ga ketemu di knowledge → jawab "tidak tahu"
+//    1. Cari context relevan dulu pakai TF-IDF
+//    2. Kirim HANYA context relevan ke Gemini
+//    3. Kalau Gemini gagal → pakai hasil TF-IDF langsung
+//    4. Kalau ga ketemu sama sekali → jawab "tidak tahu"
 // ============================================================
 
 const fs   = require("fs");
 const path = require("path");
-const { tfidfSearch } = require("../utils/tfidf");
+const { tfidfSearch, tfidfSearchTop } = require("../utils/tfidf");
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // set di Vercel dashboard
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-// ── Load Knowledge ────────────────────────────────────────────
 
 function loadKnowledge() {
   const filePath = path.join(process.cwd(), "data", "knowledge.txt");
@@ -22,23 +20,21 @@ function loadKnowledge() {
   return fs.readFileSync(filePath, "utf-8");
 }
 
-// ── Gemini API Call ───────────────────────────────────────────
-
-async function askGemini(userMessage, knowledgeContext) {
+async function askGemini(userMessage, relevantContext) {
   const prompt = `
-Kamu adalah asisten AI yang hanya menjawab berdasarkan knowledge base berikut.
-Jika jawaban TIDAK ADA di knowledge base, balas dengan tepat:
+Kamu adalah asisten AI yang HANYA menjawab berdasarkan informasi berikut.
+Jika jawaban tidak ada di informasi ini, balas TEPAT dengan:
 "Maaf, saya tidak memiliki informasi tentang itu."
 
-Jangan mengarang jawaban di luar knowledge base.
+Jangan mengarang. Jangan tambah informasi di luar yang diberikan.
 
-=== KNOWLEDGE BASE ===
-${knowledgeContext}
-=== END KNOWLEDGE BASE ===
+=== INFORMASI RELEVAN ===
+${relevantContext}
+=== END ===
 
-Pertanyaan user: ${userMessage}
+Pertanyaan: ${userMessage}
 
-Jawab dalam bahasa yang sama dengan pertanyaan user. Jawab singkat, jelas, dan ramah.
+Jawab singkat, jelas, dan ramah. Gunakan bahasa yang sama dengan pertanyaan.
 `.trim();
 
   const response = await fetch(GEMINI_URL, {
@@ -46,7 +42,7 @@ Jawab dalam bahasa yang sama dengan pertanyaan user. Jawab singkat, jelas, dan r
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 512, temperature: 0.3 }
+      generationConfig: { maxOutputTokens: 256, temperature: 0.1 }
     })
   });
 
@@ -59,10 +55,7 @@ Jawab dalam bahasa yang sama dengan pertanyaan user. Jawab singkat, jelas, dan r
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
 }
 
-// ── Main Handler ──────────────────────────────────────────────
-
 module.exports = async function handler(req, res) {
-  // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -76,34 +69,40 @@ module.exports = async function handler(req, res) {
   }
 
   const knowledge = loadKnowledge();
-
   if (!knowledge) {
-    return res.status(200).json({ reply: "Knowledge base belum tersedia. Silakan tambahkan data/knowledge.txt." });
+    return res.status(200).json({ reply: "Knowledge base belum tersedia." });
   }
 
-  // ── Step 1: Coba Gemini ──────────────────────────────────────
+  // Step 1: Cari top 3 context paling relevan
+  const topResults = tfidfSearchTop(message, knowledge, 3);
+
+  if (!topResults || topResults.length === 0) {
+    return res.status(200).json({
+      reply: "Maaf, saya tidak memiliki informasi tentang itu. 🙏",
+      source: "not_found"
+    });
+  }
+
+  // Gabungkan jadi context
+  const relevantContext = topResults
+    .map((r, i) => `${i + 1}. Q: ${r.question}\n   A: ${r.answer}`)
+    .join("\n\n");
+
+  // Step 2: Kirim HANYA context relevan ke Gemini
   if (GEMINI_API_KEY) {
     try {
-      const geminiReply = await askGemini(message, knowledge);
+      const geminiReply = await askGemini(message, relevantContext);
       if (geminiReply) {
         return res.status(200).json({ reply: geminiReply, source: "gemini" });
       }
     } catch (err) {
       console.warn("Gemini gagal, fallback ke TF-IDF:", err.message);
-      // Lanjut ke fallback
     }
   }
 
-  // ── Step 2: Fallback TF-IDF ──────────────────────────────────
-  const result = tfidfSearch(message, knowledge);
-
-  if (result) {
-    return res.status(200).json({ reply: result, source: "tfidf" });
-  }
-
-  // ── Step 3: Ga ketemu ─────────────────────────────────────────
+  // Step 3: Fallback TF-IDF
   return res.status(200).json({
-    reply: "Maaf, saya tidak memiliki informasi tentang itu. Coba tanyakan hal lain ya! 🙏",
-    source: "not_found"
+    reply: topResults[0].answer,
+    source: "tfidf"
   });
 };
