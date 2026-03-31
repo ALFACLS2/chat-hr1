@@ -1,7 +1,7 @@
 /* ===== BASE ===== */
 body {
   font-family: "Inter", sans-serif;
-  background: linear-gradient(135deg, #fde2e1 0%, #ffe9e8 40%, #f7dcdb 100%);
+  background: url('https://res.cloudinary.com/dprt1m1wl/image/upload/v1774948996/ChatGPT_Image_Mar_31_2026_08_53_34_AM_cn2ncc.png');
   background-attachment: fixed;
   min-height: 100vh;
 }
