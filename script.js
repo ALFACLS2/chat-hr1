@@ -71,6 +71,8 @@ function formatText(text) {
   text = text.replace(/`([^`]+)`/g, '<code class="bg-white/40 px-1 rounded text-secondary font-mono text-sm">$1</code>');
   // Bold **...**
   text = text.replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-primary">$1</strong>');
+  // Auto link URL → klik langsung buka tab baru
+  text = text.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary underline font-medium break-all">$1</a>');
   // Newline
   text = text.replace(/\n/g, "<br/>");
   return text;
