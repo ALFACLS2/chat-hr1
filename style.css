@@ -76,3 +76,6 @@ main {
   color: #994347;
   margin-top: 8px;
 }
+input, textarea {
+  font-size: 16px !important;
+}
