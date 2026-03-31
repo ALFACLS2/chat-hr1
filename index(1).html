@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+  <title>AI Assistant - Chat</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "secondary-container": "#fd9294",
+            "surface-dim": "#efd4d3",
+            "error-container": "#ffdad6",
+            "inverse-primary": "#ffb3b3",
+            "tertiary-fixed-dim": "#92cfe6",
+            "on-secondary": "#ffffff",
+            "inverse-on-surface": "#ffedec",
+            "surface-container": "#ffe9e8",
+            "primary-container": "#990324",
+            error: "#ba1a1a",
+            "surface-container-low": "#fff0ef",
+            "on-secondary-fixed": "#40010a",
+            "on-tertiary": "#ffffff",
+            "on-surface": "#261818",
+            "on-primary-fixed-variant": "#920021",
+            "inverse-surface": "#3d2c2c",
+            "on-tertiary-fixed": "#001f28",
+            "secondary-fixed": "#ffdad9",
+            "on-primary-container": "#ffa1a2",
+            "surface-variant": "#f7dcdb",
+            "on-surface-variant": "#5a4040",
+            "surface-container-lowest": "#ffffff",
+            "on-primary": "#ffffff",
+            "on-primary-fixed": "#400009",
+            "surface-container-highest": "#f7dcdb",
+            "on-tertiary-fixed-variant": "#004e60",
+            secondary: "#994347",
+            background: "transparent",
+            "on-secondary-container": "#77292e",
+            "primary-fixed-dim": "#ffb3b3",
+            "secondary-fixed-dim": "#ffb3b3",
+            "tertiary-fixed": "#b5ebff",
+            "surface-container-high": "#fde2e1",
+            "on-error": "#ffffff",
+            primary: "#6f0017",
+            "on-background": "#261818",
+            "outline-variant": "#e2bebd",
+            "surface-tint": "#b62135",
+            "tertiary-container": "#005265",
+            "on-secondary-fixed-variant": "#7b2c31",
+            "on-tertiary-container": "#87c4da",
+            "primary-fixed": "#ffdad9",
+            surface: "transparent",
+            tertiary: "#003a48",
+            "on-error-container": "#93000a",
+            outline: "#8e706f",
+            "surface-bright": "#fff8f7"
+          },
+          fontFamily: {
+            headline: ["Inter"],
+            body: ["Inter"],
+            label: ["Inter"],
+            display: "Inter"
+          },
+          borderRadius: {
+            DEFAULT: "0.5rem",
+            lg: "1rem",
+            xl: "1.5rem",
+            full: "9999px"
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="text-on-surface min-h-screen flex flex-col overflow-hidden">
+
+  <!-- TopAppBar -->
+  <header class="fixed top-0 w-full flex items-center justify-between px-4 py-3 glass-panel z-50">
+    <div class="flex items-center gap-3">
+      <div class="relative w-10 h-10 rounded-full bg-secondary-container/40 flex items-center justify-center overflow-hidden border border-white/30">
+        <div class="w-full h-full bg-primary flex items-center justify-center text-white font-bold text-lg">AI</div>
+        <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white/50 rounded-full"></div>
+      </div>
+      <div class="flex flex-col">
+        <h1 class="font-Inter title-sm font-semibold tracking-tight text-primary">AI Assistant</h1>
+        <span class="text-[10px] uppercase tracking-widest text-secondary font-bold" id="status-text">Online</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-1">
+      <button class="p-2 hover:bg-white/20 transition-colors active:opacity-70 rounded-full">
+        <span class="material-symbols-outlined text-slate-700">more_vert</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Chat Canvas -->
+  <main class="flex-1 overflow-y-auto pt-20 pb-24 px-4 hide-scrollbar space-y-6" id="chat-container">
+    <!-- Date Marker -->
+    <div class="flex justify-center my-8">
+      <span class="bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-semibold text-on-surface-variant tracking-wider uppercase border border-white/20" id="date-marker"></span>
+    </div>
+
+    <!-- Messages will be injected here by script.js -->
+
+    <!-- Typing Indicator (hidden by default) -->
+    <div class="flex items-center gap-2 px-2 py-2 hidden" id="typing-indicator">
+      <div class="glass-bubble-ai px-4 py-3 rounded-full flex items-center gap-1.5 shadow-sm">
+        <div class="w-1.5 h-1.5 bg-tertiary rounded-full opacity-40 animate-pulse"></div>
+        <div class="w-1.5 h-1.5 bg-tertiary rounded-full opacity-70 animate-pulse delay-75"></div>
+        <div class="w-1.5 h-1.5 bg-tertiary rounded-full animate-pulse delay-150"></div>
+        <span class="ml-2 text-[11px] font-bold text-tertiary uppercase tracking-tighter">AI is thinking...</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Message Input Bar -->
+  <footer class="fixed bottom-0 left-0 w-full glass-panel px-4 py-3 z-50 flex items-center gap-3">
+    <div class="flex-1 relative">
+      <input
+        class="w-full bg-white/40 border border-white/40 focus:ring-2 focus:ring-primary/20 rounded-full py-2.5 px-5 text-sm placeholder-slate-500 backdrop-blur-md"
+        placeholder="Type a message..."
+        type="text"
+        id="message-input"
+        autocomplete="off"
+      />
+    </div>
+    <button
+      class="flex-shrink-0 w-11 h-11 bg-primary text-white flex items-center justify-center rounded-full shadow-lg active:scale-90 transition-transform"
+      id="send-button"
+    >
+      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+    </button>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

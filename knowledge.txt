@@ -1,0 +1,24 @@
+# ============================================================
+#  knowledge.txt — Knowledge Base AI Assistant
+#  Format: Q: pertanyaan / A: jawaban
+#  Pisahkan setiap entry dengan baris kosong
+# ============================================================
+
+Q: Apa itu produk ini?
+A: Ini adalah AI Assistant yang membantu menjawab pertanyaan seputar layanan kami.
+
+Q: Bagaimana cara menghubungi tim support?
+A: Kamu bisa menghubungi tim support kami melalui email support@example.com atau WhatsApp di 08xx-xxxx-xxxx.
+
+Q: Apa saja fitur yang tersedia?
+A: Fitur yang tersedia antara lain: chat real-time, pencarian knowledge base, dan integrasi AI untuk jawaban yang lebih akurat.
+
+Q: Bagaimana cara mendaftar akun baru?
+A: Klik tombol "Daftar" di halaman utama, isi data diri kamu, lalu verifikasi email yang dikirim ke kotak masuk kamu.
+
+Q: Apakah layanan ini gratis?
+A: Kami menyediakan paket gratis dengan fitur dasar. Untuk fitur premium, tersedia paket berbayar mulai dari Rp 50.000/bulan.
+
+# Tambahkan pengetahuan kamu di bawah ini dengan format yang sama:
+# Q: pertanyaan
+# A: jawaban
